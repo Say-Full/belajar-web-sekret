@@ -1,66 +1,275 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+[How to Generate Invoice PDF in Laravel?](https://www.itsolutionstuff.com/post/how-to-generate-invoice-pdf-in-laravelexample.html)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[Laravel and DomPDF: Generate Simple Invoice PDF with Images and CSS](https://laraveldaily.com/post/laravel-dompdf-generate-simple-invoice-pdf-with-images-css)
 
-## About Laravel
+[Generating PDF documents in Laravel](https://dev.to/alphaolomi/generating-pdf-documents-in-laravel-n07) (agak aneh)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- `composer require barryvdh/laravel-dompdf`
+- `php artisan vendor:publish --provider="Barryvdh\DomPDF\ServiceProvider"`
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
-## Learning Laravel
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- config/dompdf.php:
+'default_paper_size' => 'a4',
+'orientation' => 'portrait',
+'default_font' => 'serif',
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
 
-## Laravel Sponsors
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
 
-### Premium Partners
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+- `php artisan make:controller InvoiceController`
+- app/Http/Controllers/InvoiceController.php:
+<?php
 
-## Contributing
+namespace App\Http\Controllers;
+  
+use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+  
+class InvoiceController extends Controller
+{
+    /**
+     * Write code on Method
+     *
+     * @return response()
+     */
+    public function index(Request $request)
+    {
+        $data = [
+            [
+                'quantity' => 2,
+                'description' => 'Gold',
+                'price' => '$500.00'
+            ],
+            [
+                'quantity' => 3,
+                'description' => 'Silver',
+                'price' => '$300.00'
+            ],
+            [
+                'quantity' => 5,
+                'description' => 'Platinum',
+                'price' => '$200.00'
+            ]
+        ];
 
-## Code of Conduct
+        // $data = DB::table('customers')->paginate(50);
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+        $pdf = Pdf::loadView('invoice', ['data' => $data]);
+        
+        //return $pdf->download(); // default name = 'document.pdf'
+        
+        $pdf_name = 'invoice-id123';
+        return $pdf->download($pdf_name . '.pdf');
 
-## Security Vulnerabilities
+        // return $pdf->stream();
+    }
+}
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
-## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+
+- routes/web.php:
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\InvoiceController;
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::get('invoice-pdf', [InvoiceController::class, 'index']);
+
+
+
+
+
+- resources/views/invoice.blade.php:
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title></title>
+	<link rel="stylesheet" href="{{ public_path('invoice.css') }}" type="text/css"> 
+</head>
+<body>
+  
+<table class="table-no-border">
+    <tr>
+        <td class="width-30">
+            <h2>Invoice ID: 9584525</h2>
+        </td>
+    </tr>
+</table>
+  
+<div class="margin-top">
+    <table class="table-no-border">
+        <tr>
+            <td class="width-50">
+                <div><strong>To:</strong></div>
+                <div>Mark Gadala</div>
+                <div>1401 NW 17th Ave, Florida - 33125</div>
+                <div><strong>Phone:</strong> (305) 981-1561</div>
+                <div><strong>Email:</strong> mark@gmail.com</div>
+            </td>
+            <td class="width-50">
+                <div><strong>From:</strong></div>
+                <div>Hardik Savani</div>
+                <div>201, Styam Hills, Rajkot - 360001</div>
+                <div><strong>Phone:</strong> 84695585225</div>
+                <div><strong>Email:</strong> hardik@gmail.com</div>
+            </td>
+        </tr>
+    </table>
+</div>
+  
+<div>
+    <table class="product-table">
+        <thead>
+            <tr>
+                <th class="width-25">
+                    <strong>Qty</strong>
+                </th>
+                <th class="width-50">
+                    <strong>Product</strong>
+                </th>
+                <th class="width-25">
+                    <strong>Price</strong>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($data as $value)
+            <tr>
+                <td class="width-25">
+                    {{ $value['quantity'] }}
+                </td>
+                <td class="width-50">
+                    {{ $value['description'] }}
+                </td>
+                <td class="width-25">
+                    {{ $value['price'] }}
+                </td>
+            </tr>
+            @endforeach
+        </tbody>
+        <tfoot>
+            <tr>
+                <td class="width-70" colspan="2">
+                    <strong>Sub Total:</strong>
+                </td>
+                <td class="width-25">
+                    <strong>$1000.00</strong>
+                </td>
+            </tr>
+            <tr>
+                <td class="width-70" colspan="2">
+                    <strong>Tax</strong>(10%):
+                </td>
+                <td class="width-25">
+                    <strong>$100.00</strong>
+                </td>
+            </tr>
+            <tr>
+                <td class="width-70" colspan="2">
+                    <strong>Total Amount:</strong>
+                </td>
+                <td class="width-25">
+                    <strong>$1100.00</strong>
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<div class="footer-div">
+    <p>Thank you, <br/>@ItSolutionStuff.com</p>
+</div>
+</body>
+</html>
+
+
+
+
+
+- public/invoice.css (Harus simpan di folder public/ agar bisa diakses menggunakan fungsi `public_path()` atau `asset()` milik blade):
+
+body{
+    font-family: system-ui, system-ui, sans-serif;
+}
+table{
+    border-spacing: 0;
+}
+table td, table th, p{
+    font-size: 13px !important;
+}
+img{
+    border: 3px solid #F1F5F9;
+    padding: 6px;
+    background-color: #F1F5F9;
+}
+.table-no-border{
+    width: 100%;
+}
+.table-no-border .width-50{
+    width: 50%;
+}
+.table-no-border .width-70{
+    width: 70%;
+    text-align: left;
+}
+.table-no-border .width-30{
+    width: 30%;
+}
+.margin-top{
+    margin-top: 40px;
+}
+.product-table{
+    margin-top: 20px;
+    width: 100%;
+    border-width: 0px;
+}
+.product-table thead th{
+    background-color: #60A5FA;
+    color: white;
+    padding: 5px;
+    text-align: left;
+    padding: 5px 15px;
+}
+.width-20{
+    width: 20%;
+}
+.width-50{
+    width: 50%;
+}
+.width-25{
+    width: 25%;
+}
+.width-70{
+    width: 70%;
+    text-align: right;
+}
+.product-table tbody td{
+    background-color: #F1F5F9;
+    color: black;
+    padding: 5px 15px;
+}
+.product-table td:last-child, .product-table th:last-child{
+    text-align: right;
+}
+.product-table tfoot td{
+    color: black;
+    padding: 5px 15px;
+}
+.footer-div{
+    background-color: #F1F5F9;
+    margin-top: 100px;
+    padding: 3px 10px;
+}
